@@ -1,0 +1,11 @@
+*build
+*gsl
+*.o
+*.ipynb
+*.vscode
+*.snakemake
+data
+*datasets
+*.idea
+*.ipynb_checkpoints
+*__pycache__

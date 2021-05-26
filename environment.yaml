@@ -1,0 +1,12 @@
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - jupyter
+  - scipy
+  - pandas
+  - matplotlib
+  - pysam # =0.15.4
+  - pillow # 7.0.0
+  - pytorch-gpu
