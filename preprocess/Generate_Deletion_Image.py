@@ -16,6 +16,8 @@ def draw_del_pic(bed_del, sam_file, del_name, del_called, del_images):
     bed_del: tuples (chr, start, end)
     sam_file: pysam.AlignmentFile
     del_name: del_50_200, del_20_700, ...
+    del_called: output directory for refined deletions
+    del_images: output directory for model trainning and testing
     """
     os.makedirs(del_called, exist_ok=True)
     os.makedirs(del_images, exist_ok=True)
