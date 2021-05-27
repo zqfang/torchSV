@@ -8,7 +8,8 @@ from PIL import Image
 from PIL import ImageDraw
 
 from kmeans import kmeans
-from Init_Image import pipeup_column, get_rgb
+from Init_Image import pipeup_column, get_rgb, init_pic
+from typing import List, Tuple, Dict, AnyStr
 
 #statistic depth
 def get_depth(sam_file, chr_id, pos_l, pos_r):
@@ -18,10 +19,10 @@ def get_depth(sam_file, chr_id, pos_l, pos_r):
     return depth
 
 # statistic feature numbers
-def get_clip_num(sam_file,chr_id, pos_l, pos_r):
+def get_clip_num(sam_file,chr_id, pos_l, pos_r) -> List[Tuple]:
     """get map_type number for each base in the given region.
 
-       return: list of tuples (base_pos, map_type_num)
+       return: list of tuples (base_pos, num_discordantRead_AND_splitRead)
                if region have not reads, return [].
        see map_type number here,  cigartuples, see here: https://pysam.readthedocs.io/en/latest/api.html
         If the alignment is not present, None is returned.
@@ -42,51 +43,46 @@ def get_clip_num(sam_file,chr_id, pos_l, pos_r):
     for read in sam_file.fetch(chr_id, pos_l, pos_r):
         # iter over each read(record) in the sam file
         if None != read.cigarstring:
-            base_pos = read.get_reference_positions(True) # return all positions each base for a read 
+            base_pos = read.get_reference_positions(True)
+            # full_length=True, ->  None values will be included for any soft-clipped or unaligned positions within the read.
+            # The returned list will thus be of the same length as the read
             #read_len = len(read.get_reference_positions(True))
             read_len = len(base_pos)
+
+            # because we have Nones, so left trim  start site
             index = 0
             for read_map_pos in range(read_len):
                 if base_pos[read_map_pos]!=None:
                     break
                 else:
                     index += 1
-
-             # in most case, index == 0 , so ...
             read_start = read.reference_start-index
             read_end = read_start+read_len-1
-
+            
+            ### FIXME:: definitly something wrong is here !!!!
             for i in range(pos_r-pos_l+1):
                 if pos_l+i<=read_end and pos_l+i >= read_start:
-                    index_ptr=0
+                    index_ptr = 0
                     map_type = -1
                     for cigar in read.cigartuples:
+                        # cigar string to tuples
                         # cigartuples, see here: https://pysam.readthedocs.io/en/latest/api.html 
                         # the alignment is returned as a list of tuples of (operation, length)
                         # If the alignment is not present, None is returned.
-                        if(pos_l+i>index_ptr):
+                        if(pos_l+i > index_ptr):
                             index_ptr = cigar[1]+index_ptr
                             map_type=cigar[0] # map_type: [0,9]
-                    clip_temp.append((pos_l+i,-map_type)) # TODO: why negative ?
+
+                    clip_temp.append((pos_l+i,-map_type)) # TODO: why negative ? => it became positve when get_rgb value
+            #############
     if len(clip_temp) < 1: 
         return clip_temp # the cases that regions did not have reads 
     df = pd.DataFrame(clip_temp) 
-    clip_record_df = df.groupby(0).sum() # sum records grouby base_pos
-    clip_record_df = clip_record_df//4 # TODO: why 4 here => CLIP => split-read value ?
+    # only maptype 4 softclip or 0 (match are exits in the cliptemp). 
+    clip_record_df = df.groupby(0).sum() # sum records grouby base_pos -> remove map type with 0
+    clip_record_df = clip_record_df//4 #  divide 4, and get the number of softclip reads per base
     clip_record = clip_record_df.reset_index().values.tolist()
     return clip_record
-
-# init image
-def init_pic(row, col,th,fig, flag):
-    if flag=='2d':
-        ax = fig.add_subplot(row, col, th)
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        return ax
-    elif flag == '3d':
-        ax = fig.add_subplot(row, col, th, projection='3d')
-        ax.get_xaxis().get_major_formatter().set_useOffset(False)
-        return ax
-
 
 
 # generate candidate deletion
@@ -272,7 +268,12 @@ def call_del(vcf_del, sam_file, del_name, outdir):
     return del_pos
 
 # divide image
-def draw_pic(clip_dict_record, pile_record, del_pos_np_start, deletion_length, outdir):
+def draw_pic(clip_dict_record: dict, pile_record: tuple, 
+             del_pos_np_start: int , deletion_length: int, outdir: str) -> None:
+    """
+    clip_dict_record: dict[pos, clip_num]
+    pile_record: tuple(pos, is_paired, is_concordant, map_quality, map_type, query_sequence)
+    """
     blank = Image.new("RGB",[256, 256],"white")
 
     pile_record_len = len(pile_record)
@@ -280,8 +281,8 @@ def draw_pic(clip_dict_record, pile_record, del_pos_np_start, deletion_length, o
     y_start_index = 0
     old_x_start = 5
     for j in range(pile_record_len):
-            print("-- %d"%pile_record[j][0])
-            print("--- %d"%del_pos_np_start)
+            print("Position -- %d"%pile_record[j][0]) # postion
+            print("Deletion start --- %d"%del_pos_np_start)
             x_start = (pile_record[j][0] - del_pos_np_start)*5 + 5
             print("x_start %d "%x_start)
             if old_x_start == x_start:
@@ -294,7 +295,7 @@ def draw_pic(clip_dict_record, pile_record, del_pos_np_start, deletion_length, o
                 x_end = x_start + 5
                 y_end = y_start + 5
                 if pile_record[j][0] in clip_dict_record:
-                    base_rgb = get_rgb(-clip_dict_record[pile_record[j][0]],pile_record[j])
+                    base_rgb = get_rgb(-clip_dict_record[pile_record[j][0]], pile_record[j])
                 else:
                     base_rgb = get_rgb(0,pile_record[j])
                 print("rgb")
@@ -310,8 +311,8 @@ def draw_pic(clip_dict_record, pile_record, del_pos_np_start, deletion_length, o
                 x_end = x_start + 5
                 y_end = y_start + 5
 
-                if pile_record[j][0] in clip_dict_record:
-                    base_rgb = get_rgb(-clip_dict_record[pile_record[j][0]],pile_record[j])
+                if pile_record[j][0] in clip_dict_record: # pileup record in clip dict
+                    base_rgb = get_rgb(-clip_dict_record[pile_record[j][0]], pile_record[j])
                 else:
                     base_rgb = get_rgb(0,pile_record[j])
                 print("rgb")

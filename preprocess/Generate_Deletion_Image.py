@@ -2,6 +2,7 @@
 import os, sys, argparse
 import numpy as np
 from os.path import dirname, join, abspath
+from typing import List, Tuple, Dict, AnyStr
 
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
@@ -34,12 +35,13 @@ def draw_del_pic(bed_del, sam_file, del_name, del_called, del_images):
     for i in range(num_del_pos):
         # get map_type number
         clip_record = get_clip_num(sam_file, chr_id, del_pos_np[i,0], del_pos_np[i, 1])
-        clip_dict_record = dict(clip_record) # to dict
+        clip_dict_record = dict(clip_record) # to dict {pos: map_type_num}
         # print(clip_dict_record)
         gene_pic = gene_point_pic(chr_id, del_pos_np[i,0], del_pos_np[i,1]) 
         #gene_pic: (chr, pos_l, pos_r) => for image pos_l, pos_r
         for each_pic in gene_pic:
             pile_record = pipeup_column(sam_file, each_pic[0], each_pic[1], each_pic[2])
+            # (pos, is_paired, is_concordant, map_quality, map_type, query_sequence)
             deletion_length =  each_pic[2] - each_pic[1]
             draw_pic(clip_dict_record, pile_record, each_pic[1], deletion_length, del_images)
 

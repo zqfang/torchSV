@@ -1,5 +1,15 @@
+from typing import List, Tuple
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import List, Tuple, Dict, AnyStr
+
+
 # generate pileup sequence
-def pipeup_column(sam_file,chr_id,pos_l,pos_r):
+def pipeup_column(sam_file, chr_id, pos_l, pos_r) -> List[Tuple]:
+    """
+    return every single base's pile_record in given region: 
+    (pos, is_paired, is_concordant, map_quality, map_type, query_sequence)
+    """
     pile_record=[]
     for pileupcolumn in sam_file.pileup(chr_id, pos_l, pos_r):
         # iterating over each base of a specified region using the pileup()
@@ -20,8 +30,12 @@ def pipeup_column(sam_file,chr_id,pos_l,pos_r):
                             index = cigar[1] + index
                             map_type = cigar[0]
 
-                    pile_result = (pileupcolumn.pos, pileupread.alignment.is_paired, pileupread.alignment.is_proper_pair, 
-                                   pileupread.alignment.mapping_quality, map_type, pileupread.alignment.query_sequence[pileupread.query_position])
+                    pile_result = (pileupcolumn.pos, pileupread.alignment.is_paired, 
+                                   pileupread.alignment.is_proper_pair, 
+                                   pileupread.alignment.mapping_quality, 
+                                   map_type, 
+                                   pileupread.alignment.query_sequence[pileupread.query_position]
+                                   )
                     pile_record.append(pile_result)
 
     print("pilelen is %d"%len(pile_record))
@@ -40,10 +54,15 @@ def init_pic(row, col,th,fig, flag):
 
 
 # generate colors
-def get_rgb(clip_value, every_pile_record):
+def get_rgb(clip_value, every_pile_record: tuple):
+    """
+    clip_value: 
+    every_pile_record: tuple(pos, is_paired, is_concordant, map_quality, map_type, query_sequence)
+    """
     if every_pile_record[5] == 'A':
         # Red
         base_A = [255,0,0]  
+        ## note: last
         if every_pile_record[1] == 'True' and every_pile_record[2] == 'True' and every_pile_record[3] >= 20 and every_pile_record[4] != 4:
             base_A = [255,0,0]
         elif every_pile_record[1] == 'True' and every_pile_record[2] == 'True' and every_pile_record[3] >= 20 and every_pile_record[4] == 4:
