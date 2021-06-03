@@ -71,7 +71,7 @@ def get_clip_num(sam_file,chr_id, pos_l, pos_r) -> List[Tuple]:
                         # If the alignment is not present, None is returned.
                         if(pos_l+i > index_ptr):
                             index_ptr = cigar[1]+index_ptr
-                            map_type=cigar[0] # map_type: [0,9]
+                            map_type=cigar[0] # map_type: [0, 9]
 
                     clip_temp.append((pos_l+i,-map_type)) # TODO: why negative ? => it became positve when get_rgb value
             #############
