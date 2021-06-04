@@ -2,6 +2,9 @@
 import os, sys, glob
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import roc_curve, precision_recall_curve, roc_auc_score, accuracy_score
@@ -20,7 +23,7 @@ num_epochs = 1000
 
 test_csv = ""
 test_image_dir = ""
-MODEL_PATH = "checkpoint/model.epoch.1000.pth"
+MODEL_PATH = "checkpoints/model.epoch.1000.pth"
 
 
 test_data = DelDataset(test_csv, test_image_dir)

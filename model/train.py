@@ -11,7 +11,7 @@ from torch.utils.data.dataloader import DataLoader
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import roc_curve, precision_recall_curve, roc_auc_score, accuracy_score
 
-from dataset import DelDataset
+from dataset import DelDataset, TrainValTestSplit
 from model import DELCNN
 
 num_class = 2
@@ -22,6 +22,7 @@ learning_rate = 0.001
 num_epochs = 1000
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+T## run rainValTestSplit(...) first
 train_csv = ""
 test_csv = ""
 train_image_dir = ""
@@ -53,7 +54,7 @@ scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [500, 1000, 2000], g
 
 print("Start training")
 # Training the Model
-
+os.makedirs("checkpoints", exist_ok=True)
 last_loss = 1000
 for epoch in range(num_epochs):
     running_loss = 0.0

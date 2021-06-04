@@ -31,10 +31,10 @@ Here comes the pytorch version of `DeepSV`.
 - pandas
 
 ## Usage
-### Step 1: convert Deletion region to Images
+### Step 1: convert Deletions to Images
 need two input: 
-1. bam file: get pileup images
-2. bed file: deletion coordinates
+1. bam file: postion sorted bam file
+2. bed file: convert a vcf file to bed file, only first 3 column are needed.
 
 3. run
 ```shell
@@ -48,18 +48,20 @@ python preprocess/Generate_Deletion_Images.py --bam test.bam --bed non_deleltion
 
 Once all the `pileup images` are generated, the rest become easy. 
 
-```shell
-python ....
+```python
+from dataset import TrainValTestSplit
+tvt = TrainValTestSplit("del","non_del")
+tvt.to_csv("csv")
 ```
 
 ### Step 3: train the model
 ```shell
-python model/train.py --indir datasets
+python model/train.py 
 ```
 
 ### Step 4: inference
 ```shell
-python model/eval.py --indir demo
+python model/eval.py 
 ```
 
 ### Step 5: convert to matrix
