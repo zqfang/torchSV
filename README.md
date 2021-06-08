@@ -8,6 +8,8 @@ Used `variant graph` instead.
 
 what is `vg`? find it [here](https://github.com/vgteam/vg/wiki)
 
+For SV calling and evaluation, use the [Toil-vg](https://github.com/vgteam/toil-vg/wiki/Genotyping-Structural-Variants) is much better (use `--container None` to run on local nodes ).
+
 
 ### Why I do this ?
 I got structural variants from long-read sequencing, and I'd like to infer them using short-read data.
